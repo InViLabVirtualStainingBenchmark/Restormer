@@ -42,6 +42,14 @@ models/
 pretrained/
 pretrained_models/
 
+Denoising/
+Deraining/
+Motion_Deblurring/
+tb_logger/
+Results_Restormer/
+Test2800_small/
+
+
 # Training outputs
 results/
 outputs/

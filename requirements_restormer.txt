@@ -1,0 +1,26 @@
+# Core UA Tier2 stack
+torch==2.1.2
+torchvision==0.16.2
+torchaudio==2.1.2
+opencv-python==4.8.1.78
+opencv-contrib-python==4.8.1.78
+
+# Scientific stack
+numpy==1.26.4
+scipy
+scikit-image
+matplotlib
+tqdm
+pillow
+pyyaml
+tensorboard
+einops
+albumentations
+
+# Restormer + BasicSR dependencies
+natsort
+lmdb
+requests
+yapf
+addict
+future

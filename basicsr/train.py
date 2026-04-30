@@ -7,16 +7,37 @@ import time
 import torch
 from os import path as osp
 
-from basicsr.data import create_dataloader, create_dataset
+from basicsr.data import build_dataloader, build_dataset
 from basicsr.data.data_sampler import EnlargedSampler
 from basicsr.data.prefetch_dataloader import CPUPrefetcher, CUDAPrefetcher
-from basicsr.models import create_model
+from basicsr.models import build_model as create_model
 from basicsr.utils import (MessageLogger, check_resume, get_env_info,
                            get_root_logger, get_time_str, init_tb_logger,
                            init_wandb_logger, make_exp_dirs, mkdir_and_rename,
                            set_random_seed)
 from basicsr.utils.dist_util import get_dist_info, init_dist
-from basicsr.utils.options import dict2str, parse
+from basicsr.utils.options import dict2str, parse_options as parse
+
+import sys
+import types
+import importlib.util
+import glob
+
+# Step 1: inject local Restormer's archs into basicsr namespace
+_local_basicsr_dir = osp.dirname(osp.abspath(__file__))
+_archs_path = osp.join(_local_basicsr_dir, 'models', 'archs')
+_archs_mod = types.ModuleType('basicsr.models.archs')
+_archs_mod.__path__ = [_archs_path]
+_archs_mod.__package__ = 'basicsr.models'
+sys.modules['basicsr.models.archs'] = _archs_mod
+
+# Step 2: now load local model files — archs import will resolve correctly
+_model_dir = osp.join(_local_basicsr_dir, 'models')
+for _f in glob.glob(osp.join(_model_dir, '*_model.py')):
+    _mod_name = osp.basename(_f)[:-3]
+    _spec = importlib.util.spec_from_file_location(_mod_name, _f)
+    _mod = importlib.util.module_from_spec(_spec)
+    _spec.loader.exec_module(_mod)
 
 import numpy as np
 
@@ -31,7 +52,15 @@ def parse_options(is_train=True):
         help='job launcher')
     parser.add_argument('--local_rank', type=int, default=0)
     args = parser.parse_args()
-    opt = parse(args.opt, is_train=is_train)
+    root_path = osp.abspath(osp.join(__file__, '../..'))
+    _parsed = parse(root_path, is_train=is_train)
+
+ # parse_options in some BasicSR versions returns (opt, args)
+    if isinstance(_parsed, tuple) or isinstance(_parsed, list):
+        opt = _parsed[0]
+    else:
+        opt = _parsed
+
 
     # distributed settings
     if args.launcher == 'none':
@@ -84,16 +113,17 @@ def create_train_val_dataloader(opt, logger):
     for phase, dataset_opt in opt['datasets'].items():
         if phase == 'train':
             dataset_enlarge_ratio = dataset_opt.get('dataset_enlarge_ratio', 1)
-            train_set = create_dataset(dataset_opt)
+            train_set = build_dataset(opt['datasets']['train'])
             train_sampler = EnlargedSampler(train_set, opt['world_size'],
                                             opt['rank'], dataset_enlarge_ratio)
-            train_loader = create_dataloader(
-                train_set,
-                dataset_opt,
-                num_gpu=opt['num_gpu'],
-                dist=opt['dist'],
-                sampler=train_sampler,
-                seed=opt['manual_seed'])
+            train_loader = build_dataloader(
+    train_set,
+    opt['datasets']['train'],
+    num_gpu=opt['num_gpu'],
+    dist=opt['dist'],
+    sampler=None,
+    seed=opt['manual_seed']
+)
 
             num_iter_per_epoch = math.ceil(
                 len(train_set) * dataset_enlarge_ratio /
@@ -110,14 +140,16 @@ def create_train_val_dataloader(opt, logger):
                 f'\n\tTotal epochs: {total_epochs}; iters: {total_iters}.')
 
         elif phase == 'val':
-            val_set = create_dataset(dataset_opt)
-            val_loader = create_dataloader(
-                val_set,
-                dataset_opt,
-                num_gpu=opt['num_gpu'],
-                dist=opt['dist'],
-                sampler=None,
-                seed=opt['manual_seed'])
+            val_set = build_dataset(opt['datasets']['val'])
+            val_loader = build_dataloader(
+    val_set,
+    opt['datasets']['val'],
+    num_gpu=opt['num_gpu'],
+    dist=opt['dist'],
+    sampler=None,
+    seed=opt['manual_seed']
+)
+
             logger.info(
                 f'Number of val images/folders in {dataset_opt["name"]}: '
                 f'{len(val_set)}')

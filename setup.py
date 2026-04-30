@@ -174,3 +174,4 @@ if __name__ == '__main__':
         ext_modules=ext_modules,
         cmdclass={'build_ext': BuildExtension},
         zip_safe=False)
+
