@@ -1,15 +1,3 @@
-# GENERATE TIME: Mon May  4 15:01:18 2026
-# CMD:
-# /home/thomas/miniconda3/envs/vs_ua/lib/python3.9/site-packages/basicsr/train.py -opt /home/thomas/virtual_stain/repos/Restormer/experiments/MIST_ER_Restormer/train_MIST_ER.yml --auto_resume
-
-# GENERATE TIME: Mon May  4 14:43:37 2026
-# CMD:
-# /home/thomas/miniconda3/envs/vs_ua/lib/python3.9/site-packages/basicsr/train.py -opt /home/thomas/virtual_stain/repos/Restormer/experiments/MIST_ER_Restormer/train_MIST_ER.yml --auto_resume
-
-# GENERATE TIME: Mon May  4 14:42:39 2026
-# CMD:
-# /home/thomas/miniconda3/envs/vs_ua/lib/python3.9/site-packages/basicsr/train.py -opt /home/thomas/virtual_stain/repos/Restormer/experiments/MIST_ER_Restormer/train_MIST_ER.yml --auto_resume
-
 name: restormer_MIST_ER
 model_type: ImageCleanModel
 scale: 1

@@ -1,7 +1,3 @@
-# GENERATE TIME: Thu Apr 30 11:05:47 2026
-# CMD:
-# /home/thomas/miniconda3/envs/vs_ua/lib/python3.9/site-packages/basicsr/train.py -opt /home/thomas/virtual_stain/repos/Restormer/experiments/BCI_Restormer/train_BCI.yml --auto_resume
-
 name: restormer_BCI
 model_type: ImageCleanModel
 scale: 1

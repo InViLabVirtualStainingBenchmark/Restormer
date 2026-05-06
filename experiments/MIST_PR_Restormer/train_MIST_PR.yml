@@ -1,7 +1,3 @@
-# GENERATE TIME: Mon May  4 15:05:30 2026
-# CMD:
-# /home/thomas/miniconda3/envs/vs_ua/lib/python3.9/site-packages/basicsr/train.py -opt /home/thomas/virtual_stain/repos/Restormer/experiments/MIST_PR_Restormer/train_MIST_PR.yml --auto_resume
-
 name: restormer_MIST_PR
 model_type: ImageCleanModel
 scale: 1
