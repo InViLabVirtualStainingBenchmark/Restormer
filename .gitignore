@@ -35,7 +35,6 @@ venv.bak/
 *.safetensors
 
 # Model directories
-experiments/
 checkpoints/
 weights/
 models/
