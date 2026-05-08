@@ -8,10 +8,11 @@ datasets:
   train:
     name: MIST_PR_Train
     type: PairedImageDataset
-    dataroot_gt: /home/thomas/virtual_stain/data/MIST/PR/TrainValAB/trainB
-    dataroot_lq: /home/thomas/virtual_stain/data/MIST/PR/TrainValAB/trainA
+    dataroot_gt: /data/MIST/PR/TrainValAB/trainB
+    dataroot_lq: /data/MIST/PR/TrainValAB/trainA
     geometric_augs: true
     filename_tmpl: '{}'
+    filename_ext: jpg
     io_backend:
       type: disk
     use_hflip: true
@@ -19,18 +20,18 @@ datasets:
     num_worker_per_gpu: 4
     batch_size_per_gpu: 4
     mini_batch_sizes: [4]
-    iters: [60000]
-    gt_size: 64
-    lq_size: 64
-    gt_sizes: [64]
+    iters: [1035]
+    gt_size: 256
+    lq_size: 256
+    gt_sizes: [256]
     dataset_enlarge_ratio: 1
     prefetch_mode: ~
-
   val:
     name: MIST_PR_Val
     type: PairedImageDataset
-    dataroot_gt: /home/thomas/virtual_stain/data/MIST/PR/TrainValAB/valB
-    dataroot_lq: /home/thomas/virtual_stain/data/MIST/PR/TrainValAB/valA
+    dataroot_gt: /data/MIST/PR/TrainValAB/valB
+    dataroot_lq: /data/MIST/PR/TrainValAB/valA
+    filename_ext: jpg
     use_hflip: false
     use_rot: false
     io_backend:
@@ -53,22 +54,21 @@ path:
   pretrain_network_g: ~
   strict_load_g: true
   resume_state: ~
-  root: /home/thomas/virtual_stain/repos/Restormer
-  experiments_root: /home/thomas/virtual_stain/repos/Restormer/experiments/MIST_PR_Restormer
-  models: /home/thomas/virtual_stain/repos/Restormer/experiments/MIST_PR_Restormer/models
-  training_states: /home/thomas/virtual_stain/repos/Restormer/experiments/MIST_PR_Restormer/training_states
-  log: /home/thomas/virtual_stain/repos/Restormer/experiments/MIST_PR_Restormer/logs
-  visualization: /home/thomas/virtual_stain/repos/Restormer/experiments/MIST_PR_Restormer/visualization
+  experiments_root: /output
+  models: /output/models
+  training_states: /output/training_states
+  log: /output/logs
+  visualization: /output/visualization
 
 train:
-  total_iter: 1000
+  total_iter: 1035
   warmup_iter: -1
   use_grad_clip: true
   mixing_augs:
     mixup: false
   scheduler:
     type: CosineAnnealingRestartCyclicLR
-    periods: [30000, 30000]
+    periods: [517, 518]
     restart_weights: [1, 1]
     eta_mins: [0.0002, 0.000001]
   optim_g:
@@ -82,7 +82,7 @@ train:
     reduction: mean
 
 val:
-  val_freq: !!float 5e3
+  val_freq: 100
   save_img: false
   metrics:
     psnr:
@@ -92,7 +92,7 @@ val:
 
 logger:
   print_freq: 100
-  save_checkpoint_freq: !!float 5e3
+  save_checkpoint_freq: 1035
   use_tb_logger: true
   wandb:
     project: ~
