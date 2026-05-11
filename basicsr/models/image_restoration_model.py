@@ -1,5 +1,6 @@
 import importlib
 import torch
+from basicsr.utils.registry import MODEL_REGISTRY
 from collections import OrderedDict
 from copy import deepcopy
 from os import path as osp
@@ -48,6 +49,8 @@ class Mixing_Augment:
             target, input_ = self.augments[augment](target, input_)
         return target, input_
 
+
+@MODEL_REGISTRY.register()
 class ImageCleanModel(BaseModel):
     """Base Deblur model for single image deblur."""
 

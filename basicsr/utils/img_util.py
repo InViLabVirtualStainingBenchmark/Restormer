@@ -21,6 +21,8 @@ def img2tensor(imgs, bgr2rgb=True, float32=True):
 
     def _totensor(img, bgr2rgb, float32):
         if img.shape[2] == 3 and bgr2rgb:
+            if img.dtype == 'float64':
+                img = img.astype('float32')
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = torch.from_numpy(img.transpose(2, 0, 1))
         if float32:
@@ -54,11 +56,8 @@ def tensor2img(tensor, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1)):
         (Tensor or list): 3D ndarray of shape (H x W x C) OR 2D ndarray of
         shape (H x W). The channel order is BGR.
     """
-    if not (torch.is_tensor(tensor) or
-            (isinstance(tensor, list)
-             and all(torch.is_tensor(t) for t in tensor))):
-        raise TypeError(
-            f'tensor or list of tensors expected, got {type(tensor)}')
+    if not (torch.is_tensor(tensor) or (isinstance(tensor, list) and all(torch.is_tensor(t) for t in tensor))):
+        raise TypeError(f'tensor or list of tensors expected, got {type(tensor)}')
 
     if torch.is_tensor(tensor):
         tensor = [tensor]
@@ -69,9 +68,7 @@ def tensor2img(tensor, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1)):
 
         n_dim = _tensor.dim()
         if n_dim == 4:
-            img_np = make_grid(
-                _tensor, nrow=int(math.sqrt(_tensor.size(0))),
-                normalize=False).numpy()
+            img_np = make_grid(_tensor, nrow=int(math.sqrt(_tensor.size(0))), normalize=False).numpy()
             img_np = img_np.transpose(1, 2, 0)
             if rgb2bgr:
                 img_np = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
@@ -86,8 +83,7 @@ def tensor2img(tensor, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1)):
         elif n_dim == 2:
             img_np = _tensor.numpy()
         else:
-            raise TypeError('Only support 4D, 3D or 2D tensor. '
-                            f'But received with dimension: {n_dim}')
+            raise TypeError(f'Only support 4D, 3D or 2D tensor. But received with dimension: {n_dim}')
         if out_type == np.uint8:
             # Unlike MATLAB, numpy.unit8() WILL NOT round by default.
             img_np = (img_np * 255.0).round()
@@ -96,6 +92,23 @@ def tensor2img(tensor, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1)):
     if len(result) == 1:
         result = result[0]
     return result
+
+
+def tensor2img_fast(tensor, rgb2bgr=True, min_max=(0, 1)):
+    """This implementation is slightly faster than tensor2img.
+    It now only supports torch tensor with shape (1, c, h, w).
+
+    Args:
+        tensor (Tensor): Now only support torch tensor with (1, c, h, w).
+        rgb2bgr (bool): Whether to change rgb to bgr. Default: True.
+        min_max (tuple[int]): min and max values for clamp.
+    """
+    output = tensor.squeeze(0).detach().clamp_(*min_max).permute(1, 2, 0)
+    output = (output - min_max[0]) / (min_max[1] - min_max[0]) * 255
+    output = output.type(torch.uint8).cpu().numpy()
+    if rgb2bgr:
+        output = cv2.cvtColor(output, cv2.COLOR_RGB2BGR)
+    return output
 
 
 def imfrombytes(content, flag='color', float32=False):
@@ -112,71 +125,12 @@ def imfrombytes(content, flag='color', float32=False):
         ndarray: Loaded image array.
     """
     img_np = np.frombuffer(content, np.uint8)
-    imread_flags = {
-        'color': cv2.IMREAD_COLOR,
-        'grayscale': cv2.IMREAD_GRAYSCALE,
-        'unchanged': cv2.IMREAD_UNCHANGED
-    }
-    if img_np is None:
-        raise Exception('None .. !!!')
+    imread_flags = {'color': cv2.IMREAD_COLOR, 'grayscale': cv2.IMREAD_GRAYSCALE, 'unchanged': cv2.IMREAD_UNCHANGED}
     img = cv2.imdecode(img_np, imread_flags[flag])
     if float32:
         img = img.astype(np.float32) / 255.
     return img
 
-def imfrombytesDP(content, flag='color', float32=False):
-    """Read an image from bytes.
-
-    Args:
-        content (bytes): Image bytes got from files or other streams.
-        flag (str): Flags specifying the color type of a loaded image,
-            candidates are `color`, `grayscale` and `unchanged`.
-        float32 (bool): Whether to change to float32., If True, will also norm
-            to [0, 1]. Default: False.
-
-    Returns:
-        ndarray: Loaded image array.
-    """
-    img_np = np.frombuffer(content, np.uint8)
-    if img_np is None:
-        raise Exception('None .. !!!')
-    img = cv2.imdecode(img_np, cv2.IMREAD_UNCHANGED)
-    if float32:
-        img = img.astype(np.float32) / 65535.
-    return img
-
-def padding(img_lq, img_gt, gt_size):
-    h, w, _ = img_lq.shape
-
-    h_pad = max(0, gt_size - h)
-    w_pad = max(0, gt_size - w)
-    
-    if h_pad == 0 and w_pad == 0:
-        return img_lq, img_gt
-
-    img_lq = cv2.copyMakeBorder(img_lq, 0, h_pad, 0, w_pad, cv2.BORDER_REFLECT)
-    img_gt = cv2.copyMakeBorder(img_gt, 0, h_pad, 0, w_pad, cv2.BORDER_REFLECT)
-    # print('img_lq', img_lq.shape, img_gt.shape)
-    if img_lq.ndim == 2:
-        img_lq = np.expand_dims(img_lq, axis=2)
-    if img_gt.ndim == 2:
-        img_gt = np.expand_dims(img_gt, axis=2)
-    return img_lq, img_gt
-
-def padding_DP(img_lqL, img_lqR, img_gt, gt_size):
-    h, w, _ = img_gt.shape
-
-    h_pad = max(0, gt_size - h)
-    w_pad = max(0, gt_size - w)
-    
-    if h_pad == 0 and w_pad == 0:
-        return img_lqL, img_lqR, img_gt
-
-    img_lqL = cv2.copyMakeBorder(img_lqL, 0, h_pad, 0, w_pad, cv2.BORDER_REFLECT)
-    img_lqR = cv2.copyMakeBorder(img_lqR, 0, h_pad, 0, w_pad, cv2.BORDER_REFLECT)
-    img_gt  = cv2.copyMakeBorder(img_gt,  0, h_pad, 0, w_pad, cv2.BORDER_REFLECT)
-    # print('img_lq', img_lq.shape, img_gt.shape)
-    return img_lqL, img_lqR, img_gt
 
 def imwrite(img, file_path, params=None, auto_mkdir=True):
     """Write image to file.
@@ -194,7 +148,9 @@ def imwrite(img, file_path, params=None, auto_mkdir=True):
     if auto_mkdir:
         dir_name = os.path.abspath(os.path.dirname(file_path))
         os.makedirs(dir_name, exist_ok=True)
-    return cv2.imwrite(file_path, img, params)
+    ok = cv2.imwrite(file_path, img, params)
+    if not ok:
+        raise IOError('Failed in writing images.')
 
 
 def crop_border(imgs, crop_border):
@@ -211,10 +167,6 @@ def crop_border(imgs, crop_border):
         return imgs
     else:
         if isinstance(imgs, list):
-            return [
-                v[crop_border:-crop_border, crop_border:-crop_border, ...]
-                for v in imgs
-            ]
+            return [v[crop_border:-crop_border, crop_border:-crop_border, ...] for v in imgs]
         else:
-            return imgs[crop_border:-crop_border, crop_border:-crop_border,
-                        ...]
+            return imgs[crop_border:-crop_border, crop_border:-crop_border, ...]
