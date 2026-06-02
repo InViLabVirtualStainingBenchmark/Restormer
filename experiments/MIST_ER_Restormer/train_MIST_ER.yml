@@ -6,7 +6,7 @@ manual_seed: 100
 
 datasets:
   train:
-    name: BCI_Train
+    name: MIST_ER_Train
     type: PairedImageDataset
     dataroot_gt: /data/train_IHC
     dataroot_lq: /data/train_HE
@@ -19,14 +19,14 @@ datasets:
     num_worker_per_gpu: 4
     batch_size_per_gpu: 2
     mini_batch_sizes: [2]
-    iters: [150000]
+    iters: [50000]
     gt_size: 256
     lq_size: 256
     gt_sizes: [256]
     dataset_enlarge_ratio: 1
     prefetch_mode: ~
   val:
-    name: BCI_Val
+    name: MIST_ER_Val
     type: PairedImageDataset
     dataroot_gt: /data/val_IHC
     dataroot_lq: /data/val_HE
@@ -59,14 +59,14 @@ path:
   visualization: /output/visualization
 
 train:
-  total_iter: 150000
+  total_iter: 50000
   warmup_iter: -1
   use_grad_clip: true
   mixing_augs:
     mixup: false
   scheduler:
     type: CosineAnnealingRestartCyclicLR
-    periods: [75000, 75000]
+    periods: [25000, 25000]
     restart_weights: [1, 1]
     eta_mins: [0.0002, 0.000001]
   optim_g:
@@ -90,7 +90,7 @@ val:
 
 logger:
   print_freq: 100
-  save_checkpoint_freq: 10000
+  save_checkpoint_freq: 15000
   use_tb_logger: true
   wandb:
     project: ~
