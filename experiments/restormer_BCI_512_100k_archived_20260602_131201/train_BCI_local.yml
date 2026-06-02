@@ -1,0 +1,110 @@
+# GENERATE TIME: Tue Jun  2 13:10:49 2026
+# CMD:
+# basicsr/train.py -opt experiments/BCI_Restormer/train_BCI_local.yml
+
+datasets:
+  train:
+    batch_size_per_gpu: 1
+    dataroot_gt: /home/thomas/virtual_stain/data/BCI_dataset/train/IHC
+    dataroot_lq: /home/thomas/virtual_stain/data/BCI_dataset/train/HE
+    dataset_enlarge_ratio: 1
+    filename_tmpl: '{}'
+    geometric_augs: true
+    gt_size: 512
+    io_backend:
+      type: disk
+    lq_size: 512
+    name: BCI_Train
+    num_worker_per_gpu: 4
+    prefetch_mode: null
+    type: PairedImageDataset
+    use_hflip: true
+    use_rot: true
+  val:
+    dataroot_gt: /home/thomas/virtual_stain/data/BCI_dataset/val/IHC
+    dataroot_lq: /home/thomas/virtual_stain/data/BCI_dataset/val/HE
+    io_backend:
+      type: disk
+    name: BCI_Val
+    type: PairedImageDataset
+    use_hflip: false
+    use_rot: false
+dist_params:
+  backend: nccl
+  port: 29500
+logger:
+  print_freq: 100
+  save_checkpoint_freq: 10000
+  use_tb_logger: true
+  wandb:
+    project: null
+manual_seed: 100
+model_type: ImageCleanModel
+name: restormer_BCI_512_100k
+network_g:
+  LayerNorm_type: BiasFree
+  bias: false
+  dim: 32
+  dual_pixel_task: false
+  ffn_expansion_factor: 2.66
+  heads:
+  - 1
+  - 2
+  - 4
+  - 8
+  inp_channels: 3
+  num_blocks:
+  - 4
+  - 6
+  - 6
+  - 8
+  num_refinement_blocks: 4
+  out_channels: 3
+  type: Restormer
+num_gpu: 1
+path:
+  experiments_root: /home/thomas/virtual_stain/outputs/hpc/restormer_BCI
+  log: /home/thomas/virtual_stain/outputs/hpc/restormer_BCI/logs
+  models: /home/thomas/virtual_stain/outputs/hpc/restormer_BCI/models
+  pretrain_network_g: null
+  resume_state: null
+  strict_load_g: true
+  training_states: /home/thomas/virtual_stain/outputs/hpc/restormer_BCI/training_states
+  visualization: /home/thomas/virtual_stain/outputs/hpc/restormer_BCI/visualization
+scale: 1
+train:
+  mixing_augs:
+    mixup: false
+  optim_g:
+    betas:
+    - 0.9
+    - 0.999
+    lr: 0.0002
+    type: Adam
+    weight_decay: 0.0001
+  pixel_opt:
+    loss_weight: 1
+    reduction: mean
+    type: L1Loss
+  scheduler:
+    eta_mins:
+    - 0.0002
+    - 1.0e-06
+    periods:
+    - 50000
+    - 50000
+    restart_weights:
+    - 1
+    - 1
+    type: CosineAnnealingRestartCyclicLR
+  total_iter: 100000
+  use_grad_clip: true
+  warmup_iter: -1
+val:
+  metrics:
+    psnr:
+      crop_border: 0
+      test_y_channel: false
+      type: calculate_psnr
+  save_img: false
+  val_freq: 5000

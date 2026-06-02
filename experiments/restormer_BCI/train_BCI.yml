@@ -1,3 +1,7 @@
+# GENERATE TIME: Tue Jun  2 13:07:05 2026
+# CMD:
+# basicsr/train.py -opt experiments/BCI_Restormer/train_BCI.yml
+
 name: restormer_BCI
 model_type: ImageCleanModel
 scale: 1
