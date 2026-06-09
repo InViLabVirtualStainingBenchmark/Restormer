@@ -152,3 +152,6 @@ target/
 profile_default/
 ipython_config.py
 cython_debug/
+experiments/restormer_BCI/
+experiments/*/models/*.pth
+experiments/*/training_states/*.state
