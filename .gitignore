@@ -155,3 +155,5 @@ cython_debug/
 experiments/restormer_BCI/
 experiments/*/models/*.pth
 experiments/*/training_states/*.state
+experiments/restormer_*/
+experiments/restormer_*/
